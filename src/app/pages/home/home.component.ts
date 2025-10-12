@@ -1,7 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { Observable, of } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { Observable, of, map } from 'rxjs';
 import { OlympicService } from 'src/app/core/services/olympic.service';
 import {
   OlympicCountry,

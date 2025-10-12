@@ -1,7 +1,6 @@
 import { Component } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { combineLatest, Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { Observable, combineLatest, map } from 'rxjs';
 import { OlympicService } from 'src/app/core/services/olympic.service';
 import {
   LineChartPoint,
