@@ -1,0 +1,46 @@
+<div class="country-detail" *ngIf="state$ | async as state">
+  <button class="country-detail__back" type="button" (click)="backToDashboard()">
+    ← Retour
+  </button>
+
+  <ng-container [ngSwitch]="state.status">
+    <div *ngSwitchCase="'loading'" class="country-detail__placeholder">
+      Loading country data...
+    </div>
+
+    <div *ngSwitchCase="'error'" class="country-detail__placeholder">
+      Unable to load olympic data. Please return to the dashboard.
+    </div>
+
+    <div *ngSwitchCase="'not-found'" class="country-detail__placeholder">
+      This country was not found. Please return to the dashboard.
+    </div>
+
+    <div *ngSwitchCase="'ready'" class="country-detail__content">
+      <h1 class="country-detail__title">{{ state.countryName }}</h1>
+
+      <div class="country-detail__metrics">
+        <div class="metric-card">
+          <span class="metric-card__label">Number of entries</span>
+          <span class="metric-card__value">{{ state.entries }}</span>
+        </div>
+        <div class="metric-card">
+          <span class="metric-card__label">Total number of medals</span>
+          <span class="metric-card__value">{{
+            state.totalMedals | number
+          }}</span>
+        </div>
+        <div class="metric-card">
+          <span class="metric-card__label">Total number of athletes</span>
+          <span class="metric-card__value">{{
+            state.totalAthletes | number
+          }}</span>
+        </div>
+      </div>
+
+      <div class="country-detail__chart">
+        <app-line-chart [points]="state.points || []"></app-line-chart>
+      </div>
+    </div>
+  </ng-container>
+</div>
