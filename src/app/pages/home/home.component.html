@@ -1,3 +1,35 @@
-<h2>Olympic games app</h2>
-<hr />
-<p>{{ (olympics$ | async)?.length }} data loaded</p>
+<div class="dashboard" *ngIf="state$ | async as state">
+  <ng-container [ngSwitch]="state.status">
+    <div *ngSwitchCase="'loading'" class="dashboard__placeholder">
+      Loading dashboard...
+    </div>
+
+    <div *ngSwitchCase="'error'" class="dashboard__placeholder">
+      Unable to load olympic data. Please try again later.
+    </div>
+
+    <div *ngSwitchCase="'ready'" class="dashboard__content">
+      <h1 class="dashboard__title">Dashboard</h1>
+
+      <div class="dashboard__metrics">
+        <div class="metric-card">
+          <span class="metric-card__label">Number of JOs</span>
+          <span class="metric-card__value">{{ state.numberOfJos }}</span>
+        </div>
+        <div class="metric-card">
+          <span class="metric-card__label">Number of countries</span>
+          <span class="metric-card__value">{{
+            state.numberOfCountries
+          }}</span>
+        </div>
+      </div>
+
+      <div class="dashboard__chart-area">
+        <app-pie-chart
+          [slices]="state.slices"
+          (sliceClick)="onSliceClick($event)"
+        ></app-pie-chart>
+      </div>
+    </div>
+  </ng-container>
+</div>

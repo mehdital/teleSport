@@ -5,9 +5,19 @@ import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { HomeComponent } from './pages/home/home.component';
 import { NotFoundComponent } from './pages/not-found/not-found.component';
+import { PieChartComponent } from './shared/components/pie-chart/pie-chart.component';
+import { LineChartComponent } from './shared/components/line-chart/line-chart.component';
+import { CountryDetailComponent } from './features/country-detail/country-detail.component';
 
 @NgModule({
-  declarations: [AppComponent, HomeComponent, NotFoundComponent],
+  declarations: [
+    AppComponent,
+    HomeComponent,
+    NotFoundComponent,
+    PieChartComponent,
+    LineChartComponent,
+    CountryDetailComponent,
+  ],
   imports: [BrowserModule, AppRoutingModule, HttpClientModule],
   providers: [],
   bootstrap: [AppComponent],
