@@ -1,72 +1,18 @@
-<div
-  class="line-chart"
-  [style.width.px]="width"
-  [style.height.px]="height"
->
-  <svg
-    [attr.width]="width"
-    [attr.height]="height"
-    [attr.viewBox]="'0 0 ' + width + ' ' + height"
-    role="img"
-  >
-    <title>Evolution chart</title>
-    <g class="line-chart__grid">
-      <ng-container *ngFor="let tick of yAxisTicks">
-        <line
-          class="line-chart__grid-line"
-          x1="0"
-          [attr.y1]="yPositionForValue(tick)"
-          [attr.x2]="width"
-          [attr.y2]="yPositionForValue(tick)"
-        ></line>
-        <text
-          class="line-chart__y-label"
-          [attr.x]="padding.left - 12"
-          [attr.y]="yPositionForValue(tick)"
-        >
-          {{ tick }}
-        </text>
-      </ng-container>
-    </g>
-
-    <line
-      class="line-chart__axis"
-      [attr.x1]="padding.left"
-      [attr.y1]="height - padding.bottom"
-      [attr.x2]="width - padding.right"
-      [attr.y2]="height - padding.bottom"
-    ></line>
-
-    <line
-      class="line-chart__axis"
-      [attr.x1]="padding.left"
-      [attr.y1]="padding.top"
-      [attr.x2]="padding.left"
-      [attr.y2]="height - padding.bottom"
-    ></line>
-
-    <polyline
-      *ngIf="computedPoints.length"
-      class="line-chart__polyline"
-      [attr.points]="polylinePoints"
-    ></polyline>
-
-    <ng-container *ngFor="let point of computedPoints">
-      <circle
-        class="line-chart__point"
-        [attr.cx]="point.x"
-        [attr.cy]="point.y"
-        r="5"
-      >
-        <title>{{ point.label }}: {{ point.value }}</title>
-      </circle>
-      <text
-        class="line-chart__x-label"
-        [attr.x]="point.x"
-        [attr.y]="height - padding.bottom + 24"
-      >
-        {{ point.label }}
-      </text>
-    </ng-container>
-  </svg>
+<div #chartContainer class="line-chart">
+  <ngx-charts-line-chart
+    [results]="chartData"
+    [scheme]="colorScheme"
+    [animations]="false"
+    [legend]="false"
+    [showXAxisLabel]="true"
+    [showYAxisLabel]="true"
+    [xAxis]="true"
+    [yAxis]="true"
+    [autoScale]="true"
+    [timeline]="false"
+    [roundDomains]="true"
+    [xAxisLabel]="'Year'"
+    [yAxisLabel]="'Medals'"
+    [view]="chartView"
+  ></ngx-charts-line-chart>
 </div>

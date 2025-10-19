@@ -1,86 +1,89 @@
 .dashboard {
-  width: min(960px, 100% - 48px);
-  margin: 32px auto 64px;
+  width: 100%;
+  max-width: 960px;
+  margin: 32px auto 56px;
+  padding-inline: clamp(16px, 4vw, 32px);
   display: flex;
   flex-direction: column;
-  gap: 32px;
+  gap: clamp(20px, 3.5vw, 32px);
 
   &__placeholder {
-    padding: 64px;
+    padding: clamp(40px, 6vw, 56px);
     text-align: center;
     color: #475569;
     background: rgba(226, 232, 240, 0.45);
     border-radius: 16px;
     border: 1px dashed rgba(148, 163, 184, 0.65);
+    display: grid;
+    place-items: center;
+    line-height: 1.4;
   }
 
   &__content {
     display: flex;
     flex-direction: column;
-    gap: 32px;
+    align-items: center;
+    gap: clamp(18px, 3vw, 26px);
+  }
+
+  &__header {
+    background: #198d98;
+    border-radius: 12px;
+    padding: clamp(12px, 2.5vw, 18px) clamp(20px, 5vw, 32px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: fit-content;
   }
 
   &__title {
-    font-size: 32px;
-    font-weight: 700;
-    color: #0f172a;
+    font-size: clamp(26px, 5vw, 36px);
+    font-weight: 10;
+    color: #ffffff;
     margin: 0;
+    line-height: 1.1;
+    text-align: center;
+    white-space: nowrap;
   }
 
   &__metrics {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 24px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: clamp(12px, 2.5vw, 20px);
+    width: 100%;
   }
 
   &__chart-area {
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 16px;
-  }
-}
-
-.metric-card {
-  background: rgba(15, 23, 42, 0.04);
-  border-radius: 16px;
-  padding: 24px 32px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  border: 1px solid rgba(148, 163, 184, 0.35);
-  box-shadow: 0 16px 32px rgba(15, 23, 42, 0.05);
-
-  &__label {
-    font-size: 14px;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: #64748b;
-    font-weight: 600;
-  }
-
-  &__value {
-    font-size: 32px;
-    font-weight: 700;
-    color: #0f172a;
+    padding: clamp(16px, 3vw, 24px);
+    border-radius: 16px;
+    width: 100%;
+    max-width: 680px;
   }
 }
 
 @media (max-width: 768px) {
   .dashboard {
-    width: min(100%, 100% - 32px);
-    margin: 24px auto 48px;
-
-    &__metrics {
-      grid-template-columns: 1fr;
-    }
+    margin: 24px auto 40px;
+    gap: 20px;
 
     &__chart-area {
       flex-direction: column;
+      padding: 16px;
     }
   }
+}
 
-  .metric-card {
-    padding: 20px 24px;
+@media (max-width: 480px) {
+  .dashboard {
+    padding-inline: 16px;
+
+    &__title {
+      font-size: 24px;
+      white-space: normal;
+    }
   }
 }

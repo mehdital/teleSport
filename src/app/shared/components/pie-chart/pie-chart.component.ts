@@ -1,165 +1,133 @@
 import {
+  AfterViewInit,
   Component,
+  ElementRef,
   EventEmitter,
   Input,
-  OnChanges,
+  NgZone,
+  OnDestroy,
   Output,
-  SimpleChanges,
+  ViewChild,
 } from '@angular/core';
+import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { PieChartSlice } from '../../models/olympic.model';
-
-interface ComputedSlice extends PieChartSlice {
-  startAngle: number;
-  endAngle: number;
-  largeArcFlag: number;
-  path: string;
-  midAngle: number;
-  labelX: number;
-  labelY: number;
-  percentage: number;
-}
 
 @Component({
   selector: 'app-pie-chart',
   templateUrl: './pie-chart.component.html',
   styleUrls: ['./pie-chart.component.scss'],
 })
-export class PieChartComponent implements OnChanges {
+export class PieChartComponent implements AfterViewInit, OnDestroy {
   @Input() slices: PieChartSlice[] = [];
-  @Input() size = 220;
-  @Input() radius = 100;
   @Output() sliceClick = new EventEmitter<PieChartSlice>();
-  @Output() sliceHover = new EventEmitter<PieChartSlice | null>();
+  @ViewChild('chartContainer', { static: true })
+  chartContainer!: ElementRef<HTMLDivElement>;
 
-  computedSlices: ComputedSlice[] = [];
-  hoveredSlice: ComputedSlice | null = null;
-  hoverPosition = { x: 0, y: 0 };
+  readonly colorScheme: Color = {
+    name: 'countryMedals',
+    selectable: true,
+    group: ScaleType.Ordinal,
+    domain: [
+      '#1f77b4',
+      '#ff7f0e',
+      '#2ca02c',
+      '#d62728',
+      '#9467bd',
+      '#8c564b',
+      '#e377c2',
+      '#7f7f7f',
+      '#bcbd22',
+      '#17becf',
+    ],
+  };
 
-  private readonly palette = [
-    '#1f77b4',
-    '#ff7f0e',
-    '#2ca02c',
-    '#d62728',
-    '#9467bd',
-    '#8c564b',
-    '#e377c2',
-    '#7f7f7f',
-    '#bcbd22',
-    '#17becf',
-  ];
+  chartView: [number, number] = [360, 288];
+  private resizeObserver?: ResizeObserver;
+  private readonly windowResizeHandler = () => this.updateChartDimensions();
 
-  ngOnChanges(changes: SimpleChanges): void {
-    if (changes['slices']) {
-      this.computeSlices();
-    }
-  }
+  constructor(private readonly ngZone: NgZone) {}
 
-  onSliceEnter(event: MouseEvent, slice: ComputedSlice): void {
-    this.hoveredSlice = slice;
-    this.updateHoverPosition(event);
-    this.sliceHover.emit(slice);
-  }
-
-  onSliceMove(event: MouseEvent): void {
-    if (this.hoveredSlice) {
-      this.updateHoverPosition(event);
-    }
-  }
-
-  onSliceLeave(): void {
-    this.hoveredSlice = null;
-    this.sliceHover.emit(null);
-  }
-
-  handleSliceClick(slice: ComputedSlice): void {
-    this.sliceClick.emit(slice);
-  }
-
-  sliceColor(index: number, slice: PieChartSlice): string {
-    return slice.color ?? this.palette[index % this.palette.length];
-  }
-
-  private computeSlices(): void {
-    const total = this.slices.reduce((acc, slice) => acc + slice.value, 0);
-    if (!total) {
-      this.computedSlices = [];
+  ngAfterViewInit(): void {
+    if (typeof window === 'undefined') {
       return;
     }
 
-    let currentAngle = 0;
-    const center = this.size / 2;
-    const radius = Math.min(this.radius, center);
+    // Set initial size once the view is ready
+    setTimeout(() => this.updateChartDimensions(), 0);
+    this.observeContainer();
+  }
 
-    this.computedSlices = this.slices.map((slice, index) => {
-      const valueRatio = slice.value / total;
-      const angle = valueRatio * Math.PI * 2;
-      const startAngle = currentAngle;
-      const endAngle = currentAngle + angle;
-      const midAngle = startAngle + angle / 2;
-      currentAngle = endAngle;
+  ngOnDestroy(): void {
+    this.resizeObserver?.disconnect();
 
-      const largeArcFlag = angle > Math.PI ? 1 : 0;
-      const path = this.describeSlice(center, center, radius, startAngle, endAngle);
-      const labelRadius = radius * 0.6;
-      const labelX = center + labelRadius * Math.cos(midAngle);
-      const labelY = center + labelRadius * Math.sin(midAngle);
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('resize', this.windowResizeHandler);
+    }
+  }
 
-      return {
-        ...slice,
-        color: this.sliceColor(index, slice),
-        startAngle,
-        endAngle,
-        largeArcFlag,
-        path,
-        midAngle,
-        labelX,
-        labelY,
-        percentage: valueRatio * 100,
-      };
+  get chartData(): { name: string; value: number }[] {
+    return this.slices.map((slice) => ({
+      name: slice.label,
+      value: slice.value,
+    }));
+  }
+
+  onSelect(event: { name: string }): void {
+    const slice = this.slices.find((item) => item.label === event.name);
+    if (slice) {
+      this.sliceClick.emit(slice);
+    }
+  }
+
+  private observeContainer(): void {
+    if (!this.chartContainer) {
+      return;
+    }
+
+    const hostElement = this.chartContainer.nativeElement;
+
+    if (typeof ResizeObserver !== 'undefined') {
+      this.resizeObserver = new ResizeObserver((entries) => {
+        for (const entry of entries) {
+          if (entry.target === hostElement) {
+            const width =
+              entry.contentRect?.width ?? hostElement.getBoundingClientRect().width;
+            this.updateChartDimensions(width);
+          }
+        }
+      });
+
+      this.resizeObserver.observe(hostElement);
+      return;
+    }
+
+    window.addEventListener('resize', this.windowResizeHandler, { passive: true });
+  }
+
+  private updateChartDimensions(explicitWidth?: number): void {
+    if (!this.chartContainer) {
+      return;
+    }
+
+    const hostElement = this.chartContainer.nativeElement;
+    const containerWidth =
+      explicitWidth ?? hostElement.getBoundingClientRect().width;
+
+    if (!containerWidth) {
+      return;
+    }
+
+    const width = Math.max(Math.round(containerWidth), 180);
+    const height = Math.max(240, Math.round(width * 0.75));
+    const nextView: [number, number] = [width, height];
+
+    const [currentWidth, currentHeight] = this.chartView;
+    if (currentWidth === nextView[0] && currentHeight === nextView[1]) {
+      return;
+    }
+
+    this.ngZone.run(() => {
+      this.chartView = nextView;
     });
-  }
-
-  private describeSlice(
-    cx: number,
-    cy: number,
-    radius: number,
-    startAngle: number,
-    endAngle: number
-  ): string {
-    const start = this.polarToCartesian(cx, cy, radius, endAngle);
-    const end = this.polarToCartesian(cx, cy, radius, startAngle);
-    const largeArcFlag = endAngle - startAngle <= Math.PI ? '0' : '1';
-
-    return [
-      `M ${cx} ${cy}`,
-      `L ${start.x} ${start.y}`,
-      `A ${radius} ${radius} 0 ${largeArcFlag} 0 ${end.x} ${end.y}`,
-      'Z',
-    ].join(' ');
-  }
-
-  private polarToCartesian(
-    cx: number,
-    cy: number,
-    radius: number,
-    angleInRadians: number
-  ): { x: number; y: number } {
-    return {
-      x: cx + radius * Math.cos(angleInRadians),
-      y: cy + radius * Math.sin(angleInRadians),
-    };
-  }
-
-  private updateHoverPosition(event: MouseEvent): void {
-    const target = event.currentTarget as SVGElement | null;
-    const svgRect = target?.closest('svg')?.getBoundingClientRect();
-    if (!svgRect) {
-      return;
-    }
-
-    this.hoverPosition = {
-      x: event.clientX - svgRect.left,
-      y: event.clientY - svgRect.top,
-    };
   }
 }

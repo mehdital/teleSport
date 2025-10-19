@@ -1,46 +1,14 @@
-<div
-  class="pie-chart"
-  (mouseleave)="onSliceLeave()"
-  [style.width.px]="size"
-  [style.height.px]="size"
->
-  <svg
-    [attr.viewBox]="'0 0 ' + size + ' ' + size"
-    role="img"
-    [attr.width]="size"
-    [attr.height]="size"
-  >
-    <title>Distribution chart</title>
-    <g *ngFor="let slice of computedSlices; let index = index">
-      <path
-        class="pie-chart__slice"
-        [attr.d]="slice.path"
-        [attr.fill]="slice.color"
-        (mouseenter)="onSliceEnter($event, slice)"
-        (mousemove)="onSliceMove($event)"
-        (click)="handleSliceClick(slice)"
-      >
-        <title>{{ slice.label }}: {{ slice.value }}</title>
-      </path>
-      <text
-        class="pie-chart__label"
-        [attr.x]="slice.labelX"
-        [attr.y]="slice.labelY"
-      >
-        {{ slice.label }}
-      </text>
-    </g>
-  </svg>
-
-  <div
-    *ngIf="hoveredSlice"
-    class="pie-chart__tooltip"
-    [style.left.px]="hoverPosition.x"
-    [style.top.px]="hoverPosition.y"
-  >
-    <span class="pie-chart__tooltip-label">{{ hoveredSlice.label }}</span>
-    <span class="pie-chart__tooltip-value"
-      >{{ hoveredSlice.value | number }}</span
-    >
-  </div>
+<div #chartContainer class="pie-chart">
+  <ngx-charts-pie-chart
+    [results]="chartData"
+    [scheme]="colorScheme"
+    [animations]="false"
+    [legend]="false"
+    [labels]="true"
+    [trimLabels]="false"
+    [doughnut]="false"
+    [gradient]="false"
+    [view]="chartView"
+    (select)="onSelect($event)"
+  ></ngx-charts-pie-chart>
 </div>

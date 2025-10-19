@@ -1,15 +1,26 @@
 <div class="dashboard" *ngIf="state$ | async as state">
   <ng-container [ngSwitch]="state.status">
-    <div *ngSwitchCase="'loading'" class="dashboard__placeholder">
+    <div
+      *ngSwitchCase="'loading'"
+      class="dashboard__placeholder"
+      role="status"
+      aria-live="polite"
+    >
       Loading dashboard...
     </div>
 
-    <div *ngSwitchCase="'error'" class="dashboard__placeholder">
+    <div
+      *ngSwitchCase="'error'"
+      class="dashboard__placeholder"
+      role="alert"
+    >
       Unable to load olympic data. Please try again later.
     </div>
 
     <div *ngSwitchCase="'ready'" class="dashboard__content">
-      <h1 class="dashboard__title">Dashboard</h1>
+      <div class="dashboard__header">
+        <h1 class="dashboard__title">Medals per country</h1>
+      </div>
 
       <div class="dashboard__metrics">
         <div class="metric-card">

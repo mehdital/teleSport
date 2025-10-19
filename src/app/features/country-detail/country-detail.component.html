@@ -1,18 +1,33 @@
 <div class="country-detail" *ngIf="state$ | async as state">
   <button class="country-detail__back" type="button" (click)="backToDashboard()">
-    ← Retour
+    <span aria-hidden="true" class="country-detail__back-icon">&larr;</span>
+    <span>Retour</span>
   </button>
 
   <ng-container [ngSwitch]="state.status">
-    <div *ngSwitchCase="'loading'" class="country-detail__placeholder">
+    <div
+      *ngSwitchCase="'loading'"
+      class="country-detail__placeholder"
+      role="status"
+      aria-live="polite"
+    >
       Loading country data...
     </div>
 
-    <div *ngSwitchCase="'error'" class="country-detail__placeholder">
+    <div
+      *ngSwitchCase="'error'"
+      class="country-detail__placeholder"
+      role="alert"
+    >
       Unable to load olympic data. Please return to the dashboard.
     </div>
 
-    <div *ngSwitchCase="'not-found'" class="country-detail__placeholder">
+    <div
+      *ngSwitchCase="'not-found'"
+      class="country-detail__placeholder"
+      role="status"
+      aria-live="polite"
+    >
       This country was not found. Please return to the dashboard.
     </div>
 

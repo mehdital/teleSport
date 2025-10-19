@@ -1,14 +1,23 @@
 import {
+  AfterViewInit,
   Component,
+  ElementRef,
   Input,
-  OnChanges,
-  SimpleChanges,
+  NgZone,
+  OnDestroy,
+  ViewChild,
 } from '@angular/core';
+import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { LineChartPoint } from '../../models/olympic.model';
 
-interface ComputedPoint extends LineChartPoint {
-  x: number;
-  y: number;
+interface LineChartSeriesEntry {
+  name: string;
+  value: number;
+}
+
+interface LineChartSeries {
+  name: string;
+  series: LineChartSeriesEntry[];
 }
 
 @Component({
@@ -16,92 +25,104 @@ interface ComputedPoint extends LineChartPoint {
   templateUrl: './line-chart.component.html',
   styleUrls: ['./line-chart.component.scss'],
 })
-export class LineChartComponent implements OnChanges {
+export class LineChartComponent implements AfterViewInit, OnDestroy {
   @Input() points: LineChartPoint[] = [];
-  @Input() width = 520;
-  @Input() height = 320;
+  @ViewChild('chartContainer', { static: true })
+  chartContainer!: ElementRef<HTMLDivElement>;
 
-  readonly padding = { top: 24, right: 32, bottom: 48, left: 48 };
+  readonly colorScheme: Color = {
+    name: 'countryTrend',
+    selectable: false,
+    group: ScaleType.Ordinal,
+    domain: ['#0ea5e9'],
+  };
 
-  computedPoints: ComputedPoint[] = [];
-  polylinePoints = '';
-  yAxisTicks: number[] = [];
-  maxValue = 0;
-  innerWidth = 0;
-  innerHeight = 0;
+  chartView: [number, number] = [560, 320];
+  private resizeObserver?: ResizeObserver;
+  private readonly windowResizeHandler = () => this.updateChartDimensions();
 
-  ngOnChanges(changes: SimpleChanges): void {
-    if (changes['points']) {
-      this.buildChart();
-    }
-  }
+  constructor(private readonly ngZone: NgZone) {}
 
-  private buildChart(): void {
-    if (!this.points?.length) {
-      this.computedPoints = [];
-      this.polylinePoints = '';
-      this.yAxisTicks = [];
-      this.maxValue = 0;
-      this.innerWidth = 0;
-      this.innerHeight = 0;
+  ngAfterViewInit(): void {
+    if (typeof window === 'undefined') {
       return;
     }
 
-    const sortedPoints = [...this.points].sort((a, b) =>
-      a.label.localeCompare(b.label)
+    setTimeout(() => this.updateChartDimensions(), 0);
+    this.observeContainer();
+  }
+
+  ngOnDestroy(): void {
+    this.resizeObserver?.disconnect();
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('resize', this.windowResizeHandler);
+    }
+  }
+
+  get chartData(): LineChartSeries[] {
+    const sortedPoints = [...this.points].sort(
+      (a, b) => Number(a.label) - Number(b.label)
     );
-    const values = sortedPoints.map((point) => point.value);
-    const maxValue = Math.max(...values);
-    const minValue = 0;
 
-    const innerWidth = this.width - this.padding.left - this.padding.right;
-    const innerHeight = this.height - this.padding.top - this.padding.bottom;
-    this.innerWidth = innerWidth;
-    this.innerHeight = innerHeight;
-    this.maxValue = maxValue;
+    return [
+      {
+        name: 'Medals',
+        series: sortedPoints.map((point) => ({
+          name: point.label,
+          value: point.value,
+        })),
+      },
+    ];
+  }
 
-    const stepX =
-      sortedPoints.length > 1
-        ? innerWidth / (sortedPoints.length - 1)
-        : innerWidth / 2;
-    const valueRange = maxValue - minValue || maxValue || 1;
+  private observeContainer(): void {
+    if (!this.chartContainer) {
+      return;
+    }
 
-    this.computedPoints = sortedPoints.map((point, index) => {
-      const x =
-        this.padding.left +
-        (sortedPoints.length === 1 ? innerWidth / 2 : index * stepX);
-      const scaledValue = (point.value - minValue) / valueRange;
-      const y = this.padding.top + innerHeight - scaledValue * innerHeight;
+    const hostElement = this.chartContainer.nativeElement;
 
-      return {
-        ...point,
-        x,
-        y,
-      };
+    if (typeof ResizeObserver !== 'undefined') {
+      this.resizeObserver = new ResizeObserver((entries) => {
+        for (const entry of entries) {
+          if (entry.target === hostElement) {
+            const width =
+              entry.contentRect?.width ?? hostElement.getBoundingClientRect().width;
+            this.updateChartDimensions(width);
+          }
+        }
+      });
+      this.resizeObserver.observe(hostElement);
+      return;
+    }
+
+    window.addEventListener('resize', this.windowResizeHandler, { passive: true });
+  }
+
+  private updateChartDimensions(explicitWidth?: number): void {
+    if (!this.chartContainer) {
+      return;
+    }
+
+    const hostElement = this.chartContainer.nativeElement;
+    const containerWidth =
+      explicitWidth ?? hostElement.getBoundingClientRect().width;
+
+    if (!containerWidth) {
+      return;
+    }
+
+    const width = Math.max(Math.round(containerWidth), 220);
+    const height = Math.max(260, Math.round(width * 0.6));
+    const nextView: [number, number] = [width, height];
+    const [currentWidth, currentHeight] = this.chartView;
+
+    if (currentWidth === nextView[0] && currentHeight === nextView[1]) {
+      return;
+    }
+
+    this.ngZone.run(() => {
+      this.chartView = nextView;
     });
-
-    this.polylinePoints = this.computedPoints
-      .map((point) => `${point.x},${point.y}`)
-      .join(' ');
-
-    this.yAxisTicks = this.computeYAxisTicks(maxValue);
-  }
-
-  private computeYAxisTicks(maxValue: number): number[] {
-    if (maxValue <= 0) {
-      return [0];
-    }
-
-    const tickCount = 4;
-    const tickSize = Math.ceil(maxValue / tickCount);
-    return Array.from({ length: tickCount + 1 }, (_, index) => tickSize * index);
-  }
-
-  yPositionForValue(value: number): number {
-    if (!this.innerHeight) {
-      return this.height - this.padding.bottom;
-    }
-    const ratio = value / (this.maxValue || 1);
-    return this.padding.top + this.innerHeight - ratio * this.innerHeight;
   }
 }
