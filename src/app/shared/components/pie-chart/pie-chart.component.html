@@ -1,12 +1,14 @@
-<div class="pie-chart">
+<div #chartContainer class="pie-chart">
   <ngx-charts-pie-chart
     [results]="chartData"
     [scheme]="colorScheme"
     [animations]="false"
     [legend]="false"
     [labels]="true"
+    [trimLabels]="false"
     [doughnut]="false"
     [gradient]="false"
+    [view]="chartView"
     (select)="onSelect($event)"
   ></ngx-charts-pie-chart>
 </div>

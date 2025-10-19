@@ -1,7 +1,10 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Observable, combineLatest, map } from 'rxjs';
-import { OlympicService } from 'src/app/core/services/olympic.service';
+import {
+  OlympicService,
+  OlympicState,
+} from 'src/app/core/services/olympic.service';
 import {
   LineChartPoint,
   OlympicCountry,
@@ -22,7 +25,7 @@ interface CountryDetailState {
   templateUrl: './country-detail.component.html',
   styleUrls: ['./country-detail.component.scss'],
 })
-export class CountryDetailComponent {
+export class CountryDetailComponent implements OnInit {
   state$: Observable<CountryDetailState>;
 
   constructor(
@@ -33,7 +36,15 @@ export class CountryDetailComponent {
     this.state$ = combineLatest([
       this.route.paramMap,
       this.olympicService.getOlympics(),
-    ]).pipe(map(([params, countries]) => this.buildState(params.get('id'), countries)));
+    ]).pipe(
+      map(([params, state]) =>
+        this.buildState(params.get('id'), state)
+      )
+    );
+  }
+
+  ngOnInit(): void {
+    this.olympicService.ensureDataLoaded();
   }
 
   backToDashboard(): void {
@@ -42,13 +53,13 @@ export class CountryDetailComponent {
 
   private buildState(
     idParam: string | null,
-    countries: OlympicCountry[] | null | undefined
+    olympicState: OlympicState
   ): CountryDetailState {
-    if (countries === undefined) {
+    if (olympicState.status === 'idle' || olympicState.status === 'loading') {
       return { status: 'loading' };
     }
 
-    if (countries === null) {
+    if (olympicState.status === 'error') {
       return { status: 'error' };
     }
 
@@ -57,7 +68,7 @@ export class CountryDetailComponent {
       return { status: 'not-found' };
     }
 
-    const country = countries.find((item) => item.id === id);
+    const country = olympicState.countries.find((item) => item.id === id);
     if (!country) {
       return { status: 'not-found' };
     }

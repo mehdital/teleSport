@@ -49,6 +49,3 @@ The layout is responsive to support desktop and mobile screens.
 
 Run `npm run build` and serve the generated `dist/` directory with your preferred static host (e.g., GitHub Pages, Netlify, Vercel). The project uses relative asset paths and does not require server-side logic.
 
----
-
-Feel free to fork or duplicate this repository, update the README with your deployment link, and share it with the TéléSport team once you are ready. Good luck for the final presentation! 

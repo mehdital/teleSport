@@ -1,4 +1,4 @@
-<div class="line-chart">
+<div #chartContainer class="line-chart">
   <ngx-charts-line-chart
     [results]="chartData"
     [scheme]="colorScheme"
@@ -13,5 +13,6 @@
     [roundDomains]="true"
     [xAxisLabel]="'Year'"
     [yAxisLabel]="'Medals'"
+    [view]="chartView"
   ></ngx-charts-line-chart>
 </div>

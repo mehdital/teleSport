@@ -1,11 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { Observable, of, map } from 'rxjs';
-import { OlympicService } from 'src/app/core/services/olympic.service';
 import {
-  OlympicCountry,
-  PieChartSlice,
-} from 'src/app/shared/models/olympic.model';
+  OlympicService,
+  OlympicState,
+} from 'src/app/core/services/olympic.service';
+import { PieChartSlice } from 'src/app/shared/models/olympic.model';
 
 interface DashboardState {
   status: 'loading' | 'error' | 'ready';
@@ -33,8 +33,9 @@ export class HomeComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    this.olympicService.ensureDataLoaded();
     this.state$ = this.olympicService.getOlympics().pipe(
-      map((countries) => this.buildDashboardState(countries))
+      map((state) => this.buildDashboardState(state))
     );
   }
 
@@ -45,10 +46,8 @@ export class HomeComponent implements OnInit {
     }
   }
 
-  private buildDashboardState(
-    countries: OlympicCountry[] | null | undefined
-  ): DashboardState {
-    if (countries === undefined) {
+  private buildDashboardState(state: OlympicState): DashboardState {
+    if (state.status === 'idle' || state.status === 'loading') {
       return {
         status: 'loading',
         slices: [],
@@ -57,7 +56,7 @@ export class HomeComponent implements OnInit {
       };
     }
 
-    if (countries === null) {
+    if (state.status === 'error') {
       return {
         status: 'error',
         slices: [],
@@ -66,6 +65,7 @@ export class HomeComponent implements OnInit {
       };
     }
 
+    const countries = state.countries;
     const uniqueYears = new Set<number>();
     const slices = countries.map((country): PieChartSlice => {
       const medals = country.participations.reduce(
